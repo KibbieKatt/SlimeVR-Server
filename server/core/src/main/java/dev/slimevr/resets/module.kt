@@ -344,7 +344,12 @@ class ResetsManager(
 		}
 
 		// The reference rotation is never null for other trackers
-		val referenceRotation = referenceTracker?.context?.state?.value?.rotation ?: Quaternion.IDENTITY
+		val referenceState = referenceTracker?.context?.state?.value
+		val referenceRotation = (referenceState?.rotation ?: Quaternion.IDENTITY).let { rotation ->
+			// If the bodypart is HEAD, use the headset-relative vertical
+			// plane's intersection with the horizon as the yaw reset reference
+			if (referenceState?.bodyPart == BodyPart.HEAD) headResetHeading(rotation) else rotation
+		}
 
 		// Filter out the trackers that we want to reset. Reference has already been reset.
 		val trackersToReset = filterTrackers(allTrackers, bodyParts, method, config).filter { it != referenceTracker }
